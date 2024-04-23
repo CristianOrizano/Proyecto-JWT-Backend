@@ -1,9 +1,11 @@
 package com.proyectojwt.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.util.Date;
 
 public class ErrorDetalles {
-	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "America/Lima")
 	private Date marcaDeTiempo;
 	private String mensaje;
 	private String detalles;

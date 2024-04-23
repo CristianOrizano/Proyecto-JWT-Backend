@@ -7,21 +7,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.validation.Valid;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 import com.proyectojwt.entity.Rol;
@@ -34,10 +28,8 @@ import com.proyectojwt.service.IUsuarioService;
 @RequestMapping("/usuario")
 @CrossOrigin("*")
 public class UsuarioController {
-	
 	@Autowired
 	IUsuarioService  ususervice;
-	
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 	
@@ -65,24 +57,26 @@ public class UsuarioController {
 	  @GetMapping("/actual-usuario")
 	    public Usuario obtenerUsuarioActual(Principal principal){
 		  return (Usuario) this.userDetailsService.loadUserByUsername(principal.getName());
-	        
 	    }
 	  
 	  @PutMapping("/actualiza")
 	    public ResponseEntity<Usuario> actualizarUsuario(@Valid @RequestBody Usuario usu){
 		  Usuario user = ususervice.guardar(usu);
-		  
 		  return new ResponseEntity<>(user,HttpStatus.OK);
 	    }
-	  
-      @PreAuthorize("hasAnyAuthority('ADMIN')")
+
 	  @GetMapping("/lista")
 	    public ResponseEntity<List<Usuario>> listarUsuarioo(){
 		  List<Usuario> lista =  ususervice.listaUsuario();
 		  return new ResponseEntity<>(lista,HttpStatus.OK);     
-	    }
-	  
-	  
+	  }
+
+	@GetMapping("/buscar/{nom}")
+	public ResponseEntity<Usuario> buscarUsuario(@PathVariable("nom")String nombre){
+		Usuario user= ususervice.buscarnameuser(nombre);
+		return new ResponseEntity<>(user,HttpStatus.OK);
+	}
+
 	@PostMapping("/registrar")
 	public ResponseEntity<Map<String, Object>> registrar(@Valid @RequestBody Usuario usu) {
 		Map<String, Object> salida = new HashMap<>();
@@ -92,7 +86,6 @@ public class UsuarioController {
 			salida.put("mensaje", "El nombre usuario ya existe en BD");
 			return new ResponseEntity<>(salida,HttpStatus.OK);
 		}
-
 		//resgitro de usuario con el rol definido
 		Set<Rol> roles = new HashSet<>();
 		Rol role = new Rol();
@@ -106,7 +99,6 @@ public class UsuarioController {
 
 		Usuario empl = ususervice.guardar(usu);
 		salida.put("mensaje","Usuario registrado exitosamente" );
-
 		return new ResponseEntity<>(salida,HttpStatus.OK);
 	} 
 	

@@ -1,5 +1,6 @@
 package com.proyectojwt.controller;
 
+import com.proyectojwt.entity.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,14 +17,14 @@ import com.proyectojwt.dto.LoginDTO;
 import com.proyectojwt.jwt.JWTAuthResonseDTO;
 import com.proyectojwt.jwt.JwtTokenProvider;
 
+import java.time.Clock;
+
 @RestController
 @RequestMapping("/services/auth")
 @CrossOrigin("*")
 public class AuthController {
-	
 	@Autowired
 	private AuthenticationManager authenticationManager;
-	
 	@Autowired
 	private JwtTokenProvider jwtTokenProvider;
 	
@@ -32,15 +33,19 @@ public class AuthController {
 	public ResponseEntity<JWTAuthResonseDTO> authenticateUser(@RequestBody LoginDTO loginDTO){
 		//authenticationManager iniciar proceso de Auth
 		Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword()));
-		
+
+		System.out.println("============> "+ authentication.getPrincipal());
+		Usuario usuario = (Usuario)authentication.getPrincipal();
+		System.out.println("============> "+ usuario.getUsername());
+
 		//le estamos indicando que el usuario ya esta autenticado 
 		//apartir de ahora aplicar autorizacion basada en roles
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		
 		//obtenemos el token del jwtTokenProvider
-		String token = jwtTokenProvider.generarToken(authentication);
+		JWTAuthResonseDTO token = jwtTokenProvider.getSecurity(authentication);
 		
-		return ResponseEntity.ok(new JWTAuthResonseDTO(token));
+		return ResponseEntity.ok(token);
 	}
 	
 	

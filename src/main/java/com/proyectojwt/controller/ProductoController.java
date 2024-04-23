@@ -27,29 +27,27 @@ import com.proyectojwt.service.IProducto;
 @RequestMapping("/api")
 @CrossOrigin("*")
 public class ProductoController {
-
 	@Autowired
 	private IProducto proser;
 
-
-	@PreAuthorize("hasAnyAuthority('USER','ADMIN')")
 	@GetMapping("/productos")
 	public ResponseEntity<List<Producto>> ListarProd() {
 		List<Producto> lista = proser.listadoProductos();
-
 		return new ResponseEntity<>(lista, HttpStatus.OK);
 	}
-	
-	@PreAuthorize("hasAnyAuthority('ADMIN')")
+
 	@GetMapping("/productos/{cod}")
 	public ResponseEntity<Producto> buscar(@PathVariable("cod")int codi) {
-		
 		Producto empl= proser.buscar(codi);
 		return new ResponseEntity<>(empl,HttpStatus.OK);
 	}
-	
 
-	@PreAuthorize("hasAnyAuthority('ADMIN')")
+	@GetMapping("/productos/buscar/{descripcion}")
+	public ResponseEntity<List<Producto>> buscarPorDescripcion(@PathVariable("descripcion")String des) {
+		var lista= proser.buscarPorDescripcion(des);
+		return new ResponseEntity<>(lista,HttpStatus.OK);
+	}
+
 	@PostMapping("/productos")
 	public ResponseEntity<Producto> insertar(@RequestBody Producto prod) {
 		prod.setCodigoele(0);
@@ -57,14 +55,12 @@ public class ProductoController {
 		return new ResponseEntity<>(pro, HttpStatus.CREATED);
 	}
 
-	@PreAuthorize("hasAnyAuthority('ADMIN')")
 	@PutMapping("/productos")
 	public ResponseEntity<Producto> update(@RequestBody Producto prod) {
 		Producto pro = proser.guardar(prod);
 		return new ResponseEntity<>(pro, HttpStatus.OK);
 	}
 
-	@PreAuthorize("hasAnyAuthority('ADMIN')")
 	@DeleteMapping("/productos/{cod}")
 	public ResponseEntity<Map<String, Object>> eliminar(@PathVariable("cod") int cod) {
 		Map<String, Object> salida = new HashMap<>();

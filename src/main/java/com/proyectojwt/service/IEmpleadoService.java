@@ -2,21 +2,16 @@ package com.proyectojwt.service;
 
 import java.util.List;
 
-import com.proyectojwt.dto.EmpleadoDTO;
-import com.proyectojwt.entity.Empleado;
+import com.proyectojwt.dto.empleado.EmpleadoDTO;
+import com.proyectojwt.dto.categoria.CategoriaDto;
+import com.proyectojwt.dto.categoria.CategoriaSaveDto;
+import com.proyectojwt.dto.empleado.EmpleadoSaveDto;
 
 public interface IEmpleadoService {
-	
-	//metodo para update or add
-	public EmpleadoDTO guardar(EmpleadoDTO em);
-	
-	//metodo eliminar
-	public void eliminar(int codigo);
-	
-	//metodo buscar
-	public EmpleadoDTO buscarEmpleado(int cod);
-	
-	//metodo para listar
-	public List<EmpleadoDTO> listaremplado();
+	List<EmpleadoDTO> listaremplado();
+	EmpleadoDTO create(EmpleadoSaveDto em);
+	EmpleadoDTO edit(Long id, EmpleadoSaveDto empleadoSaveDto);
+	EmpleadoDTO disabled(Long id);
+	EmpleadoDTO findById(Long cod);
 
 }

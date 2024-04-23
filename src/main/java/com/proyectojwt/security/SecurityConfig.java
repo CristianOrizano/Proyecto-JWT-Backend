@@ -5,16 +5,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.proyectojwt.jwt.JwtAuthenticationEntryPoint;
@@ -26,14 +28,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
-	
+public class SecurityConfig  {
 
 	@Bean
-	public PasswordEncoder metodo() {
+	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-	
 	@Autowired
 	private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 	
@@ -41,40 +41,38 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public JwtAuthenticationFilter jwtAuthenticationFilter() {
 		return new JwtAuthenticationFilter();
 	}
-	
 	@Autowired
 	UserDetailsService userDetailsService;
-	
+
 	@Bean
-	AuthenticationManager authenticationManager(HttpSecurity httpSecurity, PasswordEncoder passwordEncoder)
-			throws Exception {
-		return httpSecurity.getSharedObject(AuthenticationManagerBuilder.class).userDetailsService(userDetailsService)
-				.passwordEncoder(passwordEncoder).and().build();
+	public DaoAuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+		authProvider.setUserDetailsService(userDetailsService);
+		authProvider.setPasswordEncoder(passwordEncoder());
+		return authProvider;
 	}
-	
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		http.csrf().disable()
-		    .exceptionHandling()//como manejar exepciones
-		    .authenticationEntryPoint(jwtAuthenticationEntryPoint)//para manejar excepcion de error
-		    .and()
-		    .sessionManagement()
-		    .sessionCreationPolicy(SessionCreationPolicy.STATELESS) //no maneje sesiones y que cada solicitud sea autónoma
-		    .and()
-		    .authorizeRequests()
-		    .antMatchers("/services/**").permitAll()
-		    .antMatchers("/usuario/**").permitAll()
-		    .antMatchers(HttpMethod.OPTIONS).permitAll()
-		  // .antMatchers("/api/**").permitAll()
-		    .anyRequest()
-		    .authenticated();
-		    // .and()
-		     //.httpBasic();
-		http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); //filtro personalizado
-		
-		
+
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfiguration) throws Exception {
+		return authConfiguration.getAuthenticationManager();
 	}
-	
+
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http.csrf(csrf -> csrf.disable())
+				.exceptionHandling(exp -> exp.authenticationEntryPoint(jwtAuthenticationEntryPoint)) // //para manejar excepcion de error
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))  //no maneje sesiones y que cada solicitud sea autónoma
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers("/services/**", "/usuario/**").permitAll()
+						//.requestMatchers("/user/**").hasAnyAuthority("USER")
+						//.requestMatchers("/adminuser/**").hasAnyAuthority("USER", "ADMIN")
+						.requestMatchers(HttpMethod.OPTIONS).permitAll()
+						.anyRequest().authenticated()
+				)
+				.authenticationProvider(authenticationProvider())
+				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); //filtro personalizado
+	     	return http.build();
+	}
 	
 	
 	

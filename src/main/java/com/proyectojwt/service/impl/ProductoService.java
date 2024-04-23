@@ -38,7 +38,12 @@ public class ProductoService implements IProducto{
 		repo.deleteById(esta); 
 		
 	}
-	
-	
+
+	@Override
+	public List<Producto> buscarPorDescripcion(String descripcion) {
+		return repo.findByDescripcionContainingIgnoreCase(descripcion);
+
+	}
+
 
 }

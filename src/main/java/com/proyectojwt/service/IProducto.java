@@ -14,4 +14,6 @@ public interface IProducto {
 	
 	public void eliminar(int esta);
 
+	public List<Producto> buscarPorDescripcion(String descripcion);
+
 }

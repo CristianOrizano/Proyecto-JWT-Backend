@@ -4,8 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.validation.Valid;
 
+import com.proyectojwt.dto.empleado.EmpleadoSaveDto;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,73 +19,46 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.proyectojwt.dto.EmpleadoDTO;
+import com.proyectojwt.dto.empleado.EmpleadoDTO;
 import com.proyectojwt.dto.EstadoDTO;
-import com.proyectojwt.entity.Empleado;
-import com.proyectojwt.entity.Estado;
 import com.proyectojwt.service.IEmpleadoService;
 
 @RestController
-@RequestMapping("/api/res")
+@RequestMapping("/api/empleado")
 @CrossOrigin("*")
 public class EmpleadoController {
-	
 	@Autowired
 	IEmpleadoService emplead;
-	
-	//list
-	@PreAuthorize("hasAnyAuthority('USER','ADMIN')")
-	@GetMapping("/empleado")
+
+	@GetMapping()
 	public ResponseEntity<List<EmpleadoDTO>> listaempleado() {
-		
 		List<EmpleadoDTO>lista= emplead.listaremplado();
-		return new ResponseEntity<>(lista,HttpStatus.OK);
+		return ResponseEntity.ok(lista);
 	}
-	
-	//buscar empleado
-	@PreAuthorize("hasAnyAuthority('USER','ADMIN')")
-	@GetMapping("/empleado/{cod}")
-	public ResponseEntity<EmpleadoDTO> buscar(@PathVariable("cod")int codi) {
+	@GetMapping("/{id}")
+	public ResponseEntity<EmpleadoDTO> buscar(@PathVariable("id")Long codi) {
+		EmpleadoDTO empl= emplead.findById(codi);
+		return ResponseEntity.ok(empl);
+	}
+	@PostMapping()
+	public ResponseEntity<EmpleadoDTO> Addempleado(@Valid @RequestBody EmpleadoSaveDto emp) {
+		EmpleadoDTO empl = emplead.create(emp);
+		return new ResponseEntity<>(empl,HttpStatus.CREATED);
+	}
+
+	@PutMapping("/{id}")
+	public ResponseEntity<EmpleadoDTO> Updateempleado(@Valid @RequestBody EmpleadoSaveDto emp, @PathVariable("id") Long id) {
 		
-		EmpleadoDTO empl= emplead.buscarEmpleado(codi);
+		EmpleadoDTO empl = emplead.edit(id,emp);
 		return new ResponseEntity<>(empl,HttpStatus.OK);
 	}
 
-	//add 
-	@PreAuthorize("hasAnyAuthority('ADMIN')")
-	@PostMapping("/empleado")
-	public ResponseEntity<EmpleadoDTO> Addempleado(@Valid @RequestBody EmpleadoDTO emp) {
-		emp.setCodigo(0);
-		EmpleadoDTO empl = emplead.guardar(emp);
-		return new ResponseEntity<>(empl,HttpStatus.CREATED);
-	}
-	
-	
-	@PreAuthorize("hasAuthority('ADMIN')")
-	@PutMapping("/empleado")
-	public ResponseEntity<EmpleadoDTO> Updateempleado(@Valid @RequestBody EmpleadoDTO emp) {
-		
-		EmpleadoDTO empl = emplead.guardar(emp);
-		return new ResponseEntity<>(empl,HttpStatus.OK);
-	}
-	
-	
-	//delete
-	@PreAuthorize("hasAuthority('ADMIN')")
-	@DeleteMapping("/empleado/{cod}")
-	public ResponseEntity<Map<String, Object>> eliminaremple(@PathVariable("cod") int cod) {
-		Map<String, Object> salida = new HashMap<>();
-		EmpleadoDTO emp = emplead.buscarEmpleado(cod);
-		EstadoDTO estado = new EstadoDTO();
-		estado.setCodestad(2);
-		emp.setEstad(estado);
-		emplead.guardar(emp);
-		String men = "empleado eliminado exitoso";
-		salida.put("mensaje", men);
-		return new ResponseEntity<>(salida, HttpStatus.OK);
+	@DeleteMapping("/{id}")
+	public ResponseEntity<EmpleadoDTO> eliminaremple(@PathVariable("id") Long cod) {
+		EmpleadoDTO empleadoDTO = emplead.disabled(cod);
+		return ResponseEntity.ok(empleadoDTO);
 	}
 	
 	

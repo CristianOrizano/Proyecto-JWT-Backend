@@ -1,37 +1,28 @@
 package com.proyectojwt.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import java.util.List;
 
+
+@Setter
+@Getter
 @Entity
 @Table(name = "tb_categoria")
 public class Categoria {
-	
 	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name="ide_cat")
-	private int codigocate;
-	
-	@Column(name="descripcion")
+	private Long  codigocate;
 	private String nombre;
+	private String descripcion;
 
-	public int getCodigocate() {
-		return codigocate;
-	}
+	@Column(nullable = false)
+	private boolean state;
 
-	public void setCodigocate(int codigocate) {
-		this.codigocate = codigocate;
-	}
-
-	public String getNombre() {
-		return nombre;
-	}
-
-	public void setNombre(String nombre) {
-		this.nombre = nombre;
-	}
-
-	
-	
+	@JsonIgnore
+	@OneToMany(mappedBy = "cate",cascade = CascadeType.ALL)
+	private List<Producto> listaCategorias;
 }

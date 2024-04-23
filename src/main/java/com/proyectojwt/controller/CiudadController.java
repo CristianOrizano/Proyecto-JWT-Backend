@@ -21,30 +21,20 @@ import com.proyectojwt.service.IEstado;
 @RequestMapping("/api")
 @CrossOrigin("*")
 public class CiudadController {
-	
 	@Autowired
 	ICiudad serCiudad;
-	
 	@Autowired
 	IEstado serEstado;
-	
-	//list
-	@PreAuthorize("hasAnyAuthority('USER','ADMIN')")
+
 	@GetMapping("/ciudad")
 	public ResponseEntity<List<Ciudad>> listCiudad() {
-		
 		List<Ciudad>lista= serCiudad.listadCiudad();
 		return new ResponseEntity<>(lista,HttpStatus.OK);
 	}
-	
-	//list
-	@PreAuthorize("hasAnyAuthority('USER','ADMIN')")
+
 	@GetMapping("/estado")
 	public ResponseEntity<List<Estado>> listEstado() {
-		
 		List<Estado>lista= serEstado.listEstados();
 		return new ResponseEntity<>(lista,HttpStatus.OK);
-	
-
  }
 }

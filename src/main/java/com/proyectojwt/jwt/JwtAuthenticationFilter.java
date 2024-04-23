@@ -2,11 +2,12 @@ package com.proyectojwt.jwt;
 
 import java.io.IOException;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,7 +19,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.proyectojwt.security.UsuarioDetails;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter{
-
 	@Autowired
 	private JwtTokenProvider jwtTokenProvider;
 	
@@ -28,40 +28,45 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-		
 		  System.out.println("Entro al filtro==================");
-		//obtenemos el token de la solicitud HTTP
-				String token = obtenerJWTdeLaSolicitud(request);
-				
-				//validamos el token
-				//si token no es vacio y tiene contenido
-				if(StringUtils.hasText(token) && jwtTokenProvider.validarToken(token)) {
-					//obtenemos el username del token
-					String username = jwtTokenProvider.obtenerUsernameDelJWT(token);
-					
-					//cargamos el usuario asociado al token
-					UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
-					//se utiliza para representar la autenticacion del usuario
-					UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null,userDetails.getAuthorities());
-					authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-					
-					//establecemos usuario autenticado
-					//puede acceder arecusrsos protegidos basado en su rol
-					SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-				}
-				filterChain.doFilter(request, response);
-		
-	}
-	
-	//obtener el token enviado por el usuario
-	//Bearer token de acceso
-		private String obtenerJWTdeLaSolicitud(HttpServletRequest request) {
-			String bearerToken = request.getHeader("Authorization");
-			if(StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer")) {
-				return bearerToken.substring(7,bearerToken.length());
+
+		//obtener el token enviado por el usuario
+		//Bearer token de acceso
+		String requestTokenHeader = request.getHeader("Authorization");
+		String username = null;
+		String jwtToken = null;
+
+		if(requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")){
+			jwtToken = requestTokenHeader.substring(7);
+			try{
+				username = this.jwtTokenProvider.getUserNameFromToken(jwtToken);
+			}catch (ExpiredJwtException exception){
+				System.out.println("El token ha expirado");
+			}catch (Exception e){
+				System.out.println("ocurrio un error========>"+e.getMessage());
+				e.printStackTrace();
 			}
-			return null;
+		}else{
+			System.out.println("Token invalido , no empieza con bearer string");
 		}
-	
+
+		if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
+			//cargamos el usuario asociado al token
+			UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(username);
+			if(this.jwtTokenProvider.isTokenValid(jwtToken,userDetails)){
+
+				//se utiliza para representar la autenticacion del usuario
+				UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
+				usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+				//establecemos usuario autenticado
+				//puede acceder arecusrsos protegidos basado en su rol
+				SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+			}
+		}else{
+			System.out.println("El token no es valido");
+		}
+		filterChain.doFilter(request,response);
+	}
 
 }
